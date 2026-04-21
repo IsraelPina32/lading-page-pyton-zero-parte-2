@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Aprenda Python com IA · Asimov Academy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --n900:#08090C;--n800:#0F1114;--n700:#141619;--n600:#1C1F24;--n500:#24282F;
+  --blue:#4A9EFF;--blue-l:#74B8FF;--blue-b:#A3D4FF;
+  --blue-glow:rgba(74,158,255,0.4);--blue-sub:rgba(74,158,255,0.09);
+  --cyan:#3DDDE8;--text:#F4F6FA;--muted:#A8B3C4;--dim:#5A6478;
+  --border:rgba(74,158,255,0.15);--border-b:rgba(74,158,255,0.4);
+  --sans:'Outfit',sans-serif;--display:'Syne',sans-serif;--mono:'JetBrains Mono',monospace;
+}
+html{scroll-behavior:smooth}
+body{background:#08090C;color:var(--text);font-family:var(--sans);font-size:16px;line-height:1.6;min-height:100vh;overflow-x:hidden;cursor:none}
+ 
+/* Cursor */
+.cur-dot{position:fixed;width:8px;height:8px;background:var(--blue);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);box-shadow:0 0 10px var(--blue),0 0 20px var(--blue-glow);transition:background .2s}
+.cur-ring{position:fixed;width:36px;height:36px;border:1.5px solid rgba(56,139,253,.5);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:width .2s,height .2s,border-color .2s}
+body:has(a:hover) .cur-ring,body:has(button:hover) .cur-ring{width:54px;height:54px;border-color:rgba(56,139,253,.8)}
+ 
+/* Grain */
+body::after{content:'';position:fixed;inset:0;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");background-size:160px;pointer-events:none;z-index:1;opacity:.7}
+ 
+/* Scan */
+.scanline{position:fixed;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(56,139,253,.12),rgba(56,139,253,.4),rgba(56,139,253,.12),transparent);pointer-events:none;z-index:2;animation:scan 9s linear infinite;opacity:.5}
+@keyframes scan{0%{top:-2px}100%{top:100vh}}
+ 
+/* Blobs */
+.blob{position:fixed;border-radius:50%;pointer-events:none;z-index:0;filter:blur(110px)}
+.b1{width:700px;height:700px;background:radial-gradient(circle,rgba(56,139,253,.09) 0%,transparent 65%);top:-220px;right:-80px;animation:bd 14s ease-in-out infinite alternate}
+.b2{width:500px;height:500px;background:radial-gradient(circle,rgba(57,213,232,.06) 0%,transparent 65%);bottom:-100px;left:-120px;animation:bd 18s ease-in-out infinite alternate-reverse}
+.b3{width:280px;height:280px;background:radial-gradient(circle,rgba(56,139,253,.07) 0%,transparent 65%);top:35%;left:42%;animation:bd 22s ease-in-out infinite alternate}
+@keyframes bd{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,50px) scale(1.1)}}
+ 
+/* Grid */
+.grid-lines{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(56,139,253,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(56,139,253,.05) 1px,transparent 1px);background-size:72px 72px;mask-image:radial-gradient(ellipse 85% 65% at 50% 50%,black,transparent)}
+ 
+/* Canvas */
+#canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+ 
+/* Page */
+.page{position:relative;z-index:3;min-height:100vh;display:flex;flex-direction:column}
+ 
+/* Nav */
+nav{display:flex;align-items:center;justify-content:space-between;padding:18px 52px;border-bottom:1px solid var(--border);backdrop-filter:blur(20px);background:rgba(8,9,12,.75);position:sticky;top:0;z-index:50;animation:sD .7s cubic-bezier(.22,1,.36,1) both}
+@keyframes sD{from{opacity:0;transform:translateY(-20px)}to{opacity:1;transform:translateY(0)}}
+.logo{font-family:var(--display);font-weight:800;font-size:1.15rem;letter-spacing:-.04em;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:10px}
+.logo-icon{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,var(--blue),var(--cyan));display:flex;align-items:center;justify-content:center;box-shadow:0 0 16px var(--blue-glow);animation:lp 3s ease-in-out infinite}
+@keyframes lp{0%,100%{box-shadow:0 0 16px var(--blue-glow)}50%{box-shadow:0 0 30px var(--blue-glow),0 0 50px rgba(56,139,253,.2)}}
+.logo-icon svg{width:14px;height:14px;fill:none;stroke:white;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.nav-links{display:flex;gap:28px;list-style:none}
+.nav-links a{font-size:.875rem;color:#8FA3BC;text-decoration:none;font-weight:400;transition:color .2s;position:relative;padding:4px 0}
+.nav-links a::after{content:'';position:absolute;bottom:0;left:0;right:100%;height:1px;background:var(--blue);transition:right .3s cubic-bezier(.22,1,.36,1)}
+.nav-links a:hover{color:var(--text)}
+.nav-links a:hover::after{right:0}
+.nav-btn{font-size:.875rem;font-weight:500;padding:9px 22px;border-radius:8px;border:1px solid var(--border-b);background:var(--blue-sub);color:var(--blue-l);text-decoration:none;cursor:none;transition:background .25s,box-shadow .25s,transform .15s}
+.nav-btn:hover{background:rgba(56,139,253,.15);box-shadow:0 0 20px rgba(56,139,253,.2);transform:translateY(-1px)}
+ 
+/* Hero */
+.hero{flex:1;display:grid;grid-template-columns:1.05fr .95fr;gap:56px;align-items:center;padding:72px 52px 96px;max-width:1340px;margin:0 auto;width:100%}
+.hero-left{display:flex;flex-direction:column;gap:28px}
+ 
+/* Badge */
+.badge{display:inline-flex;align-items:center;gap:10px;padding:7px 16px;border-radius:100px;border:1px solid rgba(56,139,253,.3);background:rgba(56,139,253,.07);font-family:var(--mono);font-size:.75rem;color:var(--blue-l);width:fit-content;animation:fU .7s .1s cubic-bezier(.22,1,.36,1) both;position:relative;overflow:hidden}
+.badge::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(56,139,253,.15),transparent);transform:translateX(-100%);animation:bs 3.5s 1.5s ease infinite}
+@keyframes bs{0%{transform:translateX(-100%)}50%,100%{transform:translateX(200%)}}
+.bdot{width:7px;height:7px;border-radius:50%;background:var(--blue);box-shadow:0 0 8px var(--blue);animation:bdp 1.5s ease-in-out infinite}
+@keyframes bdp{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+ 
+/* Headline */
+.hero-headline{font-family:var(--display);font-size:clamp(2rem,4.2vw,3.5rem);font-weight:800;line-height:1.07;letter-spacing:-.045em;animation:fU .8s .2s cubic-bezier(.22,1,.36,1) both}
+.gw{background:linear-gradient(120deg,var(--blue-l) 0%,var(--cyan) 50%,var(--blue-b) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;background-size:200%;animation:gs 4s ease infinite}
+@keyframes gs{0%{background-position:0%}50%{background-position:100%}100%{background-position:0%}}
+.typed{display:inline}
+.tcur{display:inline-block;width:3px;height:.85em;background:var(--blue);vertical-align:text-bottom;margin-left:2px;animation:blink .9s step-end infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+ 
+/* Sub */
+.hero-sub{font-size:1.1rem;color:#BDCADB;font-weight:400;line-height:1.75;max-width:490px;animation:fU .8s .35s cubic-bezier(.22,1,.36,1) both}
+ 
+/* Bullets */
+.bullets{display:flex;flex-direction:column;gap:10px;animation:fU .8s .45s cubic-bezier(.22,1,.36,1) both}
+.bullet{display:flex;align-items:center;gap:14px;font-size:.95rem;color:#C8D4E3;font-weight:400;padding:10px 14px;border-radius:10px;border:1px solid transparent;transition:border-color .25s,background .25s,transform .3s cubic-bezier(.34,1.56,.64,1),color .25s;cursor:default}
+.bullet:hover{border-color:var(--border);background:rgba(56,139,253,.05);transform:translateX(8px);color:var(--text)}
+.bcheck{flex-shrink:0;width:22px;height:22px;border-radius:7px;background:rgba(56,139,253,.12);border:1px solid rgba(56,139,253,.25);display:flex;align-items:center;justify-content:center;transition:background .25s,box-shadow .25s}
+.bullet:hover .bcheck{background:rgba(56,139,253,.22);box-shadow:0 0 14px rgba(56,139,253,.3)}
+.bcheck svg{width:12px;height:12px;stroke:var(--blue-l);fill:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+ 
+/* CTAs */
+.cta-row{display:flex;align-items:center;gap:14px;flex-wrap:wrap;animation:fU .8s .55s cubic-bezier(.22,1,.36,1) both}
+.btn-p{display:inline-flex;align-items:center;gap:10px;padding:15px 30px;border-radius:12px;background:var(--blue);color:#fff;font-family:var(--sans);font-weight:600;font-size:.95rem;text-decoration:none;cursor:none;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s,filter .2s;box-shadow:0 4px 24px rgba(56,139,253,.3)}
+.btn-p::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.22),transparent);transform:translateX(-100%);transition:transform .5s}
+.btn-p:hover::before{transform:translateX(150%)}
+.btn-p:hover{transform:translateY(-3px);box-shadow:0 14px 42px rgba(56,139,253,.5),0 0 0 1px rgba(56,139,253,.4);filter:brightness(1.08)}
+.btn-p:active{transform:translateY(-1px)}
+.btn-p .arr{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.5;transition:transform .25s}
+.btn-p:hover .arr{transform:translateX(4px)}
+.btn-s{display:inline-flex;align-items:center;gap:8px;padding:15px 26px;border-radius:12px;background:transparent;color:var(--text);font-family:var(--sans);font-weight:500;font-size:.95rem;text-decoration:none;cursor:none;border:1px solid var(--border);transition:border-color .25s,background .25s,transform .2s,color .25s}
+.btn-s:hover{border-color:var(--border-b);background:rgba(56,139,253,.06);transform:translateY(-2px);color:var(--blue-l)}
+.btn-s svg{width:14px;height:14px;stroke:var(--muted);fill:none;stroke-width:2;transition:stroke .25s,transform .25s}
+.btn-s:hover svg{stroke:var(--blue-l);transform:translateX(3px)}
+ 
+/* Proof */
+.proof{display:flex;align-items:center;gap:14px;animation:fU .8s .65s cubic-bezier(.22,1,.36,1) both}
+.avs{display:flex}
+.av{width:30px;height:30px;border-radius:50%;border:2px solid var(--n900);background:linear-gradient(135deg,var(--n600),var(--n500));font-family:var(--mono);font-size:.58rem;color:var(--blue-l);display:flex;align-items:center;justify-content:center;margin-left:-9px;position:relative;transition:transform .2s}
+.av:first-child{margin-left:0}
+.av:hover{transform:translateY(-4px) scale(1.12);z-index:10}
+.stars{display:flex;gap:2px}
+.stars svg{width:12px;height:12px;fill:#F0A500}
+.proof-txt{font-size:.82rem;color:#9AAABF}
+.proof-txt strong{color:var(--text);font-weight:600}
+ 
+/* Right */
+.hero-right{display:flex;flex-direction:column;gap:14px;animation:fL .9s .3s cubic-bezier(.22,1,.36,1) both;perspective:1000px}
+@keyframes fL{from{opacity:0;transform:translateX(50px)}to{opacity:1;transform:translateX(0)}}
+.tilt{transform-style:preserve-3d;transition:transform .12s ease-out;position:relative}
+ 
+/* Code card */
+.code-card{background:#0C0D10;border:1px solid var(--border);border-radius:18px;overflow:hidden;box-shadow:0 40px 100px rgba(0,0,0,.7),0 0 0 .5px rgba(74,158,255,.08);position:relative;transition:box-shadow .3s}
+.code-card::before{content:'';position:absolute;inset:-1px;border-radius:18px;background:linear-gradient(135deg,rgba(56,139,253,.18),transparent 40%,transparent 60%,rgba(57,213,232,.1));pointer-events:none;z-index:0;opacity:0;transition:opacity .4s}
+.tilt:hover .code-card::before{opacity:1}
+.tilt:hover .code-card{box-shadow:0 50px 120px rgba(0,0,0,.7),0 0 40px rgba(56,139,253,.15)}
+.card-hdr{display:flex;align-items:center;gap:8px;padding:14px 20px;border-bottom:1px solid var(--border);background:rgba(56,139,253,.03);position:relative;z-index:1}
+.wd{width:11px;height:11px;border-radius:50%}
+.wr{background:#FF5F57}.wy{background:#FEBC2E}.wg{background:#27C840}
+.ftab{margin-left:14px;font-family:var(--mono);font-size:.72rem;color:var(--muted);padding:3px 10px;border-radius:5px;background:rgba(56,139,253,.08);border:1px solid var(--border)}
+.run{margin-left:auto;display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:.7rem;color:var(--blue-l);padding:4px 12px;border-radius:5px;border:1px solid var(--border-b);background:var(--blue-sub);cursor:none;transition:background .2s,box-shadow .2s}
+.run:hover{background:rgba(56,139,253,.15);box-shadow:0 0 14px rgba(56,139,253,.25)}
+.run svg{width:8px;height:8px;fill:var(--blue)}
+.code-body{padding:22px 24px;font-family:var(--mono);font-size:.81rem;line-height:2;color:#AAB8CC;overflow-x:auto;position:relative;z-index:1}
+.ln{color:rgba(255,255,255,.12);user-select:none;margin-right:18px;display:inline-block;width:16px;text-align:right}
+.kw{color:#79B8FF}.fn{color:#B392F0}.st{color:#F97583}.cm{color:#484F58;font-style:italic}.ac{color:#58A6FF}.cl{color:#FFEA7F}
+.ccur{display:inline-block;width:2px;height:.88em;background:var(--blue);vertical-align:text-bottom;animation:blink .9s step-end infinite}
+.exec{display:flex;align-items:center;gap:10px;padding:10px 20px;border-top:1px solid var(--border);background:rgba(0,0,0,.3);font-family:var(--mono);font-size:.73rem;position:relative;z-index:1}
+.estat{display:flex;align-items:center;gap:6px;color:var(--blue-l)}
+.edot{width:6px;height:6px;border-radius:50%;background:#27C840;box-shadow:0 0 6px #27C840;animation:bdp 1.5s infinite}
+.etime{margin-left:auto;color:#5A6D82}
+ 
+/* Float tags */
+.ftag{position:absolute;background:#131418;border:1px solid var(--border-b);border-radius:10px;padding:8px 14px;font-family:var(--mono);font-size:.73rem;color:var(--blue-l);box-shadow:0 8px 24px rgba(0,0,0,.6);pointer-events:none;white-space:nowrap;z-index:10}
+.ft1{top:-14px;right:24px;animation:fa 4s ease-in-out infinite}
+.ft2{bottom:-14px;left:24px;animation:fb 5s ease-in-out infinite}
+@keyframes fa{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-8px) rotate(1deg)}}
+@keyframes fb{0%,100%{transform:translateY(0) rotate(1deg)}50%{transform:translateY(8px) rotate(-1deg)}}
+.ftdot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--cyan);box-shadow:0 0 6px var(--cyan);margin-right:6px;vertical-align:middle}
+ 
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.sc{background:#0C0D10;border:1px solid var(--border);border-radius:13px;padding:18px 16px;text-align:center;transition:border-color .3s,transform .3s,box-shadow .3s;cursor:default;position:relative;overflow:hidden}
+.sc::after{content:'';position:absolute;inset:0;border-radius:13px;background:radial-gradient(circle at 50% 0%,rgba(56,139,253,.12),transparent 70%);opacity:0;transition:opacity .3s}
+.sc:hover{border-color:var(--border-b);transform:translateY(-4px);box-shadow:0 16px 40px rgba(0,0,0,.4),0 0 22px rgba(56,139,253,.18)}
+.sc:hover::after{opacity:1}
+.sn{font-family:var(--display);font-size:1.7rem;font-weight:800;color:var(--text);letter-spacing:-.04em;position:relative;z-index:1}
+.sn .pre,.sn .suf{color:var(--blue-l);font-size:1.2rem}
+.sl{font-size:.74rem;color:#8A9AB0;margin-top:3px;position:relative;z-index:1}
+ 
+/* Terminal */
+.terminal{background:#050506;border:1px solid var(--border);border-radius:13px;padding:18px 22px;font-family:var(--mono);font-size:.8rem;line-height:2.1;color:#6A7A8F}
+.tp{color:var(--blue-l)}.tc{color:#C0CCDB}.to{color:#56D364}.ti{color:var(--blue-l)}.td{color:#3A4455}
+ 
+@keyframes fU{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+ 
+@media(max-width:960px){
+  nav{padding:16px 24px}.nav-links{display:none}
+  .hero{grid-template-columns:1fr;padding:48px 24px 64px;gap:48px}
+  .hero-right{order:-1}.ftag{display:none}
+}
+@media(max-width:520px){
+  .cta-row{flex-direction:column;align-items:stretch}
+  .btn-p,.btn-s{justify-content:center}
+  .stats{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+ 
+<div class="cur-dot" id="cd"></div>
+<div class="cur-ring" id="cr"></div>
+<canvas id="canvas"></canvas>
+<div class="scanline"></div>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<div class="grid-lines"></div>
+ 
+<div class="page">
+ 
+<!-- NAV -->
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon">
+      <svg viewBox="0 0 16 16"><polyline points="3,9 6,12 13,4"/></svg>
+    </div>
+    asimov
+  </a>
+  <ul class="nav-links">
+    <li><a href="#">Formações</a></li>
+    <li><a href="#">Trilhas</a></li>
+    <li><a href="#">Cursos</a></li>
+    <li><a href="#">Comunidade</a></li>
+    <li><a href="#">Blog</a></li>
+  </ul>
+  <a href="#" class="nav-btn">Entrar na plataforma</a>
+</nav>
+ 
+<!-- HERO -->
+<section class="hero">
+  <!-- LEFT -->
+  <div class="hero-left">
+    <div class="badge"><span class="bdot"></span>Novo módulo · Python + IA disponível</div>
+ 
+    <h1 class="hero-headline">
+      Aprenda <span class="gw">Python</span> do zero<br>e construa <span class="typed"></span><span class="tcur"></span>
+    </h1>
+ 
+    <p class="hero-sub">O curso mais prático do Brasil para quem quer entrar em tecnologia sem enrolação.</p>
+ 
+    <ul class="bullets">
+      <li class="bullet"><span class="bcheck"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>+40 horas de conteúdo direto ao ponto</li>
+      <li class="bullet"><span class="bcheck"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>Projetos com Python + IA desde o módulo 1</li>
+      <li class="bullet"><span class="bcheck"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>Suporte da comunidade com +20.000 alunos</li>
+      <li class="bullet"><span class="bcheck"><svg viewBox="0 0 12 12"><polyline points="2,6 5,9 10,3"/></svg></span>Certificado reconhecido pelo mercado</li>
+    </ul>
+ 
+    <div class="cta-row">
+      <a href="#" class="btn-p">Quero começar agora<svg class="arr" viewBox="0 0 18 18"><line x1="3" y1="9" x2="15" y2="9"/><polyline points="10,4 15,9 10,14"/></svg></a>
+      <a href="#" class="btn-s">Ver o que vou aprender<svg viewBox="0 0 16 16"><line x1="3" y1="8" x2="13" y2="8"/><polyline points="9,4 13,8 9,12"/></svg></a>
+    </div>
+ 
+    <div class="proof">
+      <div class="avs">
+        <div class="av">AL</div><div class="av">RB</div><div class="av">MC</div><div class="av">FT</div><div class="av">+</div>
+      </div>
+      <div>
+        <div class="stars">
+          <svg viewBox="0 0 12 12"><polygon points="6,1 7.5,4.2 11,4.7 8.5,7.1 9.1,10.7 6,9 2.9,10.7 3.5,7.1 1,4.7 4.5,4.2"/></svg>
+          <svg viewBox="0 0 12 12"><polygon points="6,1 7.5,4.2 11,4.7 8.5,7.1 9.1,10.7 6,9 2.9,10.7 3.5,7.1 1,4.7 4.5,4.2"/></svg>
+          <svg viewBox="0 0 12 12"><polygon points="6,1 7.5,4.2 11,4.7 8.5,7.1 9.1,10.7 6,9 2.9,10.7 3.5,7.1 1,4.7 4.5,4.2"/></svg>
+          <svg viewBox="0 0 12 12"><polygon points="6,1 7.5,4.2 11,4.7 8.5,7.1 9.1,10.7 6,9 2.9,10.7 3.5,7.1 1,4.7 4.5,4.2"/></svg>
+          <svg viewBox="0 0 12 12"><polygon points="6,1 7.5,4.2 11,4.7 8.5,7.1 9.1,10.7 6,9 2.9,10.7 3.5,7.1 1,4.7 4.5,4.2"/></svg>
+        </div>
+        <div class="proof-txt"><strong>+20.000 alunos</strong> já estão aprendendo</div>
+      </div>
+    </div>
+  </div>
+ 
+  <!-- RIGHT -->
+  <div class="hero-right">
+    <div class="tilt" id="tilt">
+      <div class="ftag ft1"><span class="ftdot"></span>módulo 1 · desbloqueado</div>
+      <div class="ftag ft2"><span class="ftdot"></span>gpt-4o · conectado ✓</div>
+ 
+      <div class="code-card">
+        <div class="card-hdr">
+          <span class="wd wr"></span><span class="wd wy"></span><span class="wd wg"></span>
+          <span class="ftab">agente_ia.py</span>
+          <div class="run"><svg viewBox="0 0 8 8"><polygon points="0,0 8,4 0,8"/></svg>Run</div>
+        </div>
+        <div class="code-body">
+<div><span class="ln">1</span><span class="cm"># Projeto real: agente inteligente com IA</span></div>
+<div><span class="ln">2</span><span class="kw">from</span> <span class="ac">openai</span> <span class="kw">import</span> <span class="fn">OpenAI</span></div>
+<div><span class="ln">3</span><span class="kw">import</span> <span class="ac">json</span></div>
+<div><span class="ln">4</span>&nbsp;</div>
+<div><span class="ln">5</span><span class="fn">client</span> = <span class="cl">OpenAI</span>()</div>
+<div><span class="ln">6</span>&nbsp;</div>
+<div><span class="ln">7</span><span class="kw">def</span> <span class="fn">agente</span>(prompt: <span class="ac">str</span>) -> <span class="ac">str</span>:</div>
+<div><span class="ln">8</span>&nbsp;&nbsp;&nbsp;&nbsp;res = client.chat.completions.<span class="fn">create</span>(</div>
+<div><span class="ln">9</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;model=<span class="st">"gpt-4o"</span>,</div>
+<div><span class="ln">10</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;messages=[{<span class="st">"role"</span>:<span class="st">"user"</span>,<span class="st">"content"</span>:prompt}]</div>
+<div><span class="ln">11</span>&nbsp;&nbsp;&nbsp;&nbsp;)</div>
+<div><span class="ln">12</span>&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> res.choices[<span class="ac">0</span>].message.content</div>
+<div><span class="ln">13</span>&nbsp;</div>
+<div><span class="ln">14</span>print(<span class="fn">agente</span>(<span class="st">"O que é machine learning?"</span>))<span class="ccur"></span></div>
+        </div>
+        <div class="exec">
+          <span class="estat"><span class="edot"></span>Pronto para executar</span>
+          <span class="etime">Python 3.12 · venv ativo</span>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- Stats -->
+    <div class="stats">
+      <div class="sc"><div class="sn"><span class="pre">+</span><span class="cnt" data-t="40">0</span><span class="suf">h</span></div><div class="sl">de conteúdo</div></div>
+      <div class="sc"><div class="sn"><span class="cnt" data-t="20">0</span><span class="suf">k</span></div><div class="sl">alunos ativos</div></div>
+      <div class="sc"><div class="sn"><span class="pre">#</span><span class="cnt" data-t="1">0</span></div><div class="sl">Python no Brasil</div></div>
+    </div>
+ 
+    <!-- Terminal -->
+    <div class="terminal">
+      <div><span class="tp">$</span> <span class="tc">python agente_ia.py</span></div>
+      <div id="tout"></div>
+    </div>
+  </div>
+</section>
+</div>
+ 
+<script>
+/* ─ Cursor ─────────────────────────────────────── */
+const cd=document.getElementById('cd'),cr=document.getElementById('cr');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY;cd.style.left=mx+'px';cd.style.top=my+'px'});
+(function loop(){rx+=(mx-rx)*.12;ry+=(my-ry)*.12;cr.style.left=rx+'px';cr.style.top=ry+'px';requestAnimationFrame(loop)})();
+ 
+/* ─ Particle canvas ─────────────────────────────── */
+const cv=document.getElementById('canvas'),ctx=cv.getContext('2d');
+let W,H,pts=[];
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}resize();
+addEventListener('resize',resize);
+const N=90;
+for(let i=0;i<N;i++)pts.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,r:Math.random()*1.5+.5,a:Math.random()*.4+.15});
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  for(let i=0;i<N;i++){
+    for(let j=i+1;j<N;j++){
+      const dx=pts[i].x-pts[j].x,dy=pts[i].y-pts[j].y,d=Math.hypot(dx,dy);
+      if(d<160){ctx.beginPath();ctx.strokeStyle=`rgba(56,139,253,${(1-d/160)*.2})`;ctx.lineWidth=.8;ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(pts[j].x,pts[j].y);ctx.stroke()}
+    }
+  }
+  pts.forEach(p=>{
+    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(88,166,255,${p.a})`;ctx.fill();
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+  });
+  requestAnimationFrame(draw);
+}
+draw();
+document.addEventListener('mousemove',e=>{
+  pts.forEach(p=>{const dx=e.clientX-p.x,dy=e.clientY-p.y,d=Math.hypot(dx,dy);if(d<130){p.vx+=dx/d*.05;p.vy+=dy/d*.05;const s=Math.hypot(p.vx,p.vy);if(s>1.5){p.vx/=s*.9;p.vy/=s*.9}}});
+});
+ 
+/* ─ 3D Tilt ─────────────────────────────────────── */
+const tilt=document.getElementById('tilt');
+tilt.addEventListener('mousemove',e=>{
+  const r=tilt.getBoundingClientRect();
+  const cx=(e.clientX-r.left)/r.width-.5,cy=(e.clientY-r.top)/r.height-.5;
+  tilt.style.transition='transform .08s ease-out';
+  tilt.style.transform=`rotateY(${cx*16}deg) rotateX(${-cy*11}deg) scale(1.025)`;
+});
+tilt.addEventListener('mouseleave',()=>{
+  tilt.style.transition='transform .7s cubic-bezier(.22,1,.36,1)';
+  tilt.style.transform='rotateY(0deg) rotateX(0deg) scale(1)';
+});
+ 
+/* ─ Typewriter ──────────────────────────────────── */
+const phrases=['projetos reais com IA','agentes inteligentes','automações poderosas','o futuro em tecnologia'];
+let pi=0,ci=0,del=false;
+const typed=document.querySelector('.typed');
+function type(){
+  const p=phrases[pi];
+  if(!del){typed.textContent=p.slice(0,++ci);if(ci===p.length){setTimeout(()=>{del=true;type()},2000);return}setTimeout(type,55+Math.random()*45)}
+  else{typed.textContent=p.slice(0,--ci);if(ci===0){del=false;pi=(pi+1)%phrases.length;setTimeout(type,400);return}setTimeout(type,28)}
+}
+setTimeout(type,1000);
+ 
+/* ─ Counters ────────────────────────────────────── */
+function countUp(el,t,dur=1800){
+  let s=null;
+  function step(ts){if(!s)s=ts;const p=Math.min((ts-s)/dur,1),e=1-Math.pow(1-p,4);el.textContent=Math.round(e*t);if(p<1)requestAnimationFrame(step);else el.textContent=t}
+  requestAnimationFrame(step);
+}
+new IntersectionObserver(entries=>{
+  entries.forEach(e=>{if(e.isIntersecting){e.target.querySelectorAll('.cnt').forEach(c=>countUp(c,+c.dataset.t));e.target&&(e.target.disconnect?e.target.disconnect():null)}});
+},{threshold:.3}).observe(document.querySelector('.stats'));
+ 
+/* ─ Terminal typewriter ─────────────────────────── */
+const lines=[
+  {c:'ti',t:'→ Inicializando agente Python...'},
+  {c:'to',t:'→ Conectando à API OpenAI...'},
+  {c:'',  t:''},
+  {c:'to',t:'"ML é a capacidade das máquinas'},
+  {c:'to',t:' aprenderem com dados sem serem'},
+  {c:'to',t:' explicitamente programadas."'},
+  {c:'',  t:''},
+  {c:'ti',t:'✓ Concluído em 1.3s · módulo 1 ativo'},
+];
+let li=0,chi=0;const tout=document.getElementById('tout');
+function ttype(){
+  if(li>=lines.length)return;
+  const l=lines[li];
+  if(chi===0){const d=document.createElement('div');d.className=l.c||'td';d.id='tl'+li;tout.appendChild(d)}
+  const d=document.getElementById('tl'+li);
+  if(!l.t){li++;chi=0;setTimeout(ttype,80);return}
+  d.textContent=l.t.slice(0,++chi);
+  if(chi>=l.t.length){li++;chi=0;setTimeout(ttype,180);return}
+  setTimeout(ttype,18+Math.random()*16);
+}
+setTimeout(ttype,1600);
+ 
+/* ─ Magnetic buttons ───────────────────────────── */
+document.querySelectorAll('.btn-p,.btn-s,.nav-btn').forEach(b=>{
+  b.addEventListener('mousemove',e=>{
+    const r=b.getBoundingClientRect(),dx=(e.clientX-r.left-r.width/2)*.14,dy=(e.clientY-r.top-r.height/2)*.14;
+    b.style.transform=`translate(${dx}px,${dy}px) translateY(-2px)`;
+  });
+  b.addEventListener('mouseleave',()=>{b.style.transform=''});
+});
+ 
+/* ─ Nav active underline on scroll ─────────────── */
+let scrollY=0;
+window.addEventListener('scroll',()=>{scrollY=window.scrollY;document.querySelector('nav').style.background=scrollY>10?'rgba(8,9,12,.95)':'rgba(8,9,12,.75)'});
+</script>
+</body>
+</html>
+ 
